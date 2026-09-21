@@ -72,6 +72,25 @@
   }
   .navlinks a:hover::after, .navlinks a.active::after { background: var(--active); }
 
+  /* Mobile nav toggle — hidden on desktop, shown + wired up only under the 760px breakpoint below */
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 36px; height: 36px;
+    background: none; border: none; padding: 0;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .nav-toggle span {
+    display: block; width: 100%; height: 2px;
+    background: var(--ultramarine);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+  .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-toggle.open span:nth-child(2) { opacity: 0; }
+  .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
   /* HERO — yellow field, all three colors doing distinct jobs */
   .hero { background: var(--gold); position: relative; overflow: hidden; padding: 96px 0 100px; }
   .hero .wrap {
@@ -204,6 +223,11 @@
   }
   .partner-logo:hover img { filter: grayscale(0%); opacity: 1; }
 
+  /* BIO — sky blue again, breaking up the two neutral bands (Partners, Bio) that would otherwise sit back-to-back */
+  .bio { background: var(--sky); color: var(--cobalt); padding: 88px 0; }
+  .bio h2 { color: var(--ultramarine); font-size: 28px; margin-bottom: 24px; }
+  .bio p { max-width: 720px; font-size: 16px; margin-bottom: 16px; color: var(--cobalt); opacity: 0.85; }
+
   /* CTA BAND — deep ultramarine, the serious close begins here */
   .cta-band { background: var(--ultramarine); padding: 72px 0 44px; }
   .cta-band .wrap {
@@ -265,6 +289,27 @@
 
 
   @media (max-width: 760px) {
+    nav { overflow: visible; }
+    .nav-toggle { display: flex; }
+    .navlinks {
+      position: fixed;
+      top: 84px; left: 0; right: 0;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      background: var(--neutral);
+      border-bottom: 1px solid rgba(27,36,114,0.15);
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.25s ease;
+    }
+    .navlinks.open { max-height: 320px; }
+    .navlinks a {
+      padding: 14px 32px;
+      border-top: 1px solid rgba(27,36,114,0.08);
+    }
+    .navlinks a::after { display: none; }
+    .navlinks a.active { background: rgba(181,72,46,0.08); }
     .hero .wrap { grid-template-columns: 1fr; }
     .hero .grid-motif-wrap { margin-top: 32px; max-width: 320px; }
     .about .wrap { grid-template-columns: 1fr; }
@@ -281,10 +326,14 @@
 <nav>
   <div class="wrap">
     <div class="wordmark">ultramarine</div>
+    <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
     <div class="navlinks">
       <a href="#about">About</a>
       <a href="#services">Services</a>
       <a href="#partners">Partners</a>
+      <a href="#bio">Bio</a>
       <a href="#contact">Contact</a>
     </div>
   </div>
@@ -376,6 +425,15 @@
   </div>
 </section>
 
+<section class="bio" id="bio">
+  <div class="wrap reveal">
+    <h2>Bio</h2>
+    <p>[First paragraph — how you got into this work: your background, your path, and the throughline connecting your experience. This section can run longer than the About blurb above, so use the room to tell the fuller story.]</p>
+    <p>[Second paragraph — a specific project, turning point, or lesson that shows how you actually think and work, not just what your title says.]</p>
+    <p>[Third paragraph — what you're focused on now, and what kind of work or clients you're looking for next.]</p>
+  </div>
+</section>
+
 <section class="cta-band reveal" id="contact">
   <div class="wrap">
     <div>
@@ -401,6 +459,7 @@
       <a href="#about">About</a>
       <a href="#services">Services</a>
       <a href="#partners">Partners</a>
+      <a href="#bio">Bio</a>
       <a href="#contact">Contact</a>
     </div>
     <div class="copy">&copy; 2026 Ultramarine Consulting. All rights reserved.</div>
@@ -411,13 +470,33 @@
   // Nav shadow + active-link scroll-spy
   const nav = document.querySelector('nav');
   const navLinks = document.querySelectorAll('.navlinks a');
-  const spySections = ['about', 'services', 'partners', 'contact']
+  const spySections = ['about', 'services', 'partners', 'bio', 'contact']
     .map((id) => document.getElementById(id))
     .filter(Boolean);
 
   window.addEventListener('scroll', () => {
     nav.classList.toggle('scrolled', window.scrollY > 8);
   }, { passive: true });
+
+  // Mobile nav toggle
+  const navToggle = document.querySelector('.nav-toggle');
+  const navLinksPanel = document.querySelector('.navlinks');
+  if (navToggle && navLinksPanel) {
+    const closeMenu = () => {
+      navToggle.classList.remove('open');
+      navLinksPanel.classList.remove('open');
+      navToggle.setAttribute('aria-expanded', 'false');
+    };
+    navToggle.addEventListener('click', () => {
+      const isOpen = navLinksPanel.classList.toggle('open');
+      navToggle.classList.toggle('open', isOpen);
+      navToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+    navLinksPanel.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMenu));
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 760) closeMenu();
+    });
+  }
 
   if ('IntersectionObserver' in window && spySections.length) {
     const spy = new IntersectionObserver((entries) => {
